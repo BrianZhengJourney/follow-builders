@@ -57,6 +57,21 @@
       "name": "Import AI (Jack Clark)",
       "rssUrl": "https://jack-clark.net/feed/",
       "lang": "en"
+    },
+    {
+      "name": "量子位 QbitAI",
+      "rssUrl": "https://diygodrsshubchromium-bundled-production-23b7.up.railway.app/qbitai/category/资讯",
+      "lang": "zh"
+    },
+    {
+      "name": "雷锋网 AI",
+      "rssUrl": "https://diygodrsshubchromium-bundled-production-23b7.up.railway.app/leiphone/category/ai",
+      "lang": "zh"
+    },
+    {
+      "name": "36氪 AI",
+      "rssUrl": "https://diygodrsshubchromium-bundled-production-23b7.up.railway.app/36kr/motif/327686782977",
+      "lang": "zh"
     }
   ],
   "x_accounts": [

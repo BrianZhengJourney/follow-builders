@@ -1019,24 +1019,36 @@ function stripCdata(s) {
   return m ? m[1] : s;
 }
 
-// Converts an HTML fragment to readable plain text and decodes common entities.
-// Numeric entities are handled too, since Chinese feeds use them heavily.
-function htmlToText(html) {
-  return (html || "")
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<\/(p|div|br|li|h[1-6])>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
+// Decodes common named + numeric HTML entities. &amp; is decoded last so that
+// double-encoded sequences (e.g. &amp;lt;) resolve correctly across two passes.
+function decodeEntities(s) {
+  return (s || "")
     .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
     .replace(/&#x([0-9a-fA-F]+);/g, (_, h) =>
       String.fromCodePoint(parseInt(h, 16)),
     )
     .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)))
+    .replace(/&amp;/g, "&");
+}
+
+// Converts an HTML fragment to readable plain text. Decodes entities FIRST so
+// that entity-encoded markup (RSSHub emits bodies like "&lt;h1&gt;...") becomes
+// real tags we can strip, then decodes again to resolve entities revealed inside
+// the content. Handles CJK numeric entities, which Chinese feeds use heavily.
+function htmlToText(html) {
+  let s = decodeEntities(html || "");
+  s = s
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<\/(p|div|br|li|h[1-6])>/gi, "\n")
+    .replace(/<[^>]+>/g, " ");
+  s = decodeEntities(s);
+  return s
     .replace(/[ \t]+/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
@@ -1053,7 +1065,9 @@ function parseRssArticles(xml) {
     const block = m[0];
 
     const titleMatch = block.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-    const title = titleMatch ? stripCdata(titleMatch[1]).trim() : "Untitled";
+    const title = titleMatch
+      ? decodeEntities(stripCdata(titleMatch[1])).trim()
+      : "Untitled";
 
     // Link: RSS uses <link>text</link>; Atom uses <link href="..."/>
     let link = null;
@@ -1082,7 +1096,9 @@ function parseRssArticles(xml) {
       block.match(/<dc:creator>([\s\S]*?)<\/dc:creator>/i) ||
       block.match(/<author>[\s\S]*?<name>([\s\S]*?)<\/name>/i) ||
       block.match(/<author>([\s\S]*?)<\/author>/i);
-    const author = authorMatch ? stripCdata(authorMatch[1]).trim() : "";
+    const author = authorMatch
+      ? decodeEntities(stripCdata(authorMatch[1])).trim()
+      : "";
 
     const bodyMatch =
       block.match(/<content:encoded>([\s\S]*?)<\/content:encoded>/i) ||
