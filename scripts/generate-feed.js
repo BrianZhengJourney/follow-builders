@@ -28,8 +28,13 @@ const RSS_USER_AGENT =
 const TWEET_LOOKBACK_HOURS = 24;
 const PODCAST_LOOKBACK_HOURS = 336; // 14 days — podcasts publish weekly/biweekly, not daily
 const BLOG_LOOKBACK_HOURS = 72;
+// RSS blogs (incl. WeChat-via-bridge and Chinese RSS) publish less frequently
+// than the AI company blogs, so we use a wider window. 168h = 7 days, which also
+// lines up better with weekly digests.
+const RSS_BLOG_LOOKBACK_HOURS = 168;
 const MAX_TWEETS_PER_USER = 3;
 const MAX_ARTICLES_PER_BLOG = 3;
+const MAX_ARTICLES_PER_RSS_BLOG = 3;
 const X_USER_LOOKUP_BATCH_SIZE = 5;
 const X_RETRY_STATUSES = new Set([500, 502, 503, 504]);
 const X_RETRY_ATTEMPTS = 3;
@@ -1000,6 +1005,167 @@ async function fetchBlogContent(blogs, state, errors) {
   return results;
 }
 
+// -- Generic RSS Article Fetching --------------------------------------------
+// Handles arbitrary RSS/Atom article feeds: WeChat 公众号 via a bridge
+// (wechat2rss / WeWe RSS), plus Chinese and English blogs that expose RSS
+// (机器之心, 知乎专栏, Substack, IEEE Spectrum, etc.). Unlike the HTML blog
+// scrapers above, this needs no per-site parser — it reads the feed's own
+// <item> elements and pulls full text from <content:encoded> when present.
+
+// Strips a CDATA wrapper if present, otherwise returns the string unchanged.
+function stripCdata(s) {
+  if (!s) return "";
+  const m = s.match(/^\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*$/);
+  return m ? m[1] : s;
+}
+
+// Converts an HTML fragment to readable plain text and decodes common entities.
+// Numeric entities are handled too, since Chinese feeds use them heavily.
+function htmlToText(html) {
+  return (html || "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<\/(p|div|br|li|h[1-6])>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) =>
+      String.fromCodePoint(parseInt(h, 16)),
+    )
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)))
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+// Parses an RSS 2.0 / Atom feed into article objects. Prefers the full-text
+// <content:encoded> body (what WeChat bridges emit) and falls back to
+// <description> / Atom <content> / <summary>.
+function parseRssArticles(xml) {
+  const articles = [];
+  const itemRegex = /<(item|entry)\b[\s\S]*?<\/\1>/gi;
+  let m;
+  while ((m = itemRegex.exec(xml)) !== null) {
+    const block = m[0];
+
+    const titleMatch = block.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    const title = titleMatch ? stripCdata(titleMatch[1]).trim() : "Untitled";
+
+    // Link: RSS uses <link>text</link>; Atom uses <link href="..."/>
+    let link = null;
+    const rssLink = block.match(/<link>([\s\S]*?)<\/link>/i);
+    if (rssLink) {
+      link = stripCdata(rssLink[1]).trim();
+    } else {
+      const atomLink =
+        block.match(/<link[^>]*rel="alternate"[^>]*href="([^"]+)"/i) ||
+        block.match(/<link[^>]*href="([^"]+)"/i);
+      if (atomLink) link = atomLink[1].trim();
+    }
+
+    const dateMatch =
+      block.match(/<pubDate>([\s\S]*?)<\/pubDate>/i) ||
+      block.match(/<published>([\s\S]*?)<\/published>/i) ||
+      block.match(/<updated>([\s\S]*?)<\/updated>/i) ||
+      block.match(/<dc:date>([\s\S]*?)<\/dc:date>/i);
+    let publishedAt = null;
+    if (dateMatch) {
+      const d = new Date(stripCdata(dateMatch[1]).trim());
+      if (!isNaN(d.getTime())) publishedAt = d.toISOString();
+    }
+
+    const authorMatch =
+      block.match(/<dc:creator>([\s\S]*?)<\/dc:creator>/i) ||
+      block.match(/<author>[\s\S]*?<name>([\s\S]*?)<\/name>/i) ||
+      block.match(/<author>([\s\S]*?)<\/author>/i);
+    const author = authorMatch ? stripCdata(authorMatch[1]).trim() : "";
+
+    const bodyMatch =
+      block.match(/<content:encoded>([\s\S]*?)<\/content:encoded>/i) ||
+      block.match(/<content[^>]*>([\s\S]*?)<\/content>/i) ||
+      block.match(/<description>([\s\S]*?)<\/description>/i) ||
+      block.match(/<summary[^>]*>([\s\S]*?)<\/summary>/i);
+    const content = bodyMatch ? htmlToText(stripCdata(bodyMatch[1])) : "";
+
+    // A unique id for dedup: prefer <guid>, fall back to the link.
+    const guidMatch = block.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i);
+    const guid = guidMatch ? stripCdata(guidMatch[1]).trim() : link;
+
+    if (link || title !== "Untitled") {
+      articles.push({ title, url: link, guid, publishedAt, author, content });
+    }
+  }
+  return articles;
+}
+
+// Main RSS-blog orchestrator. For each rss_blogs source: fetch the feed,
+// keep unseen items within the lookback window, and emit blog-shaped objects
+// that drop straight into feed-blogs.json alongside the HTML-scraped blogs.
+async function fetchRssBlogContent(rssBlogs, state, errors) {
+  const results = [];
+  const cutoff = new Date(Date.now() - RSS_BLOG_LOOKBACK_HOURS * 60 * 60 * 1000);
+
+  for (const blog of rssBlogs) {
+    if (!blog.rssUrl) {
+      errors.push(`Blog: No rssUrl configured for ${blog.name}`);
+      continue;
+    }
+    try {
+      console.error(`  Processing RSS blog: ${blog.name}...`);
+      const res = await fetch(blog.rssUrl, {
+        headers: {
+          "User-Agent": RSS_USER_AGENT,
+          Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+          "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+        },
+        signal: AbortSignal.timeout(30000),
+      });
+      if (!res.ok) {
+        errors.push(
+          `Blog: Failed to fetch RSS for ${blog.name}: HTTP ${res.status}`,
+        );
+        continue;
+      }
+      const xml = await res.text();
+      const articles = parseRssArticles(xml);
+      console.error(`    ${blog.name}: found ${articles.length} items in feed`);
+
+      let added = 0;
+      for (const article of articles) {
+        if (added >= MAX_ARTICLES_PER_RSS_BLOG) break;
+        const dedupKey = article.guid || article.url;
+        if (!dedupKey) continue;
+        if (state.seenArticles[dedupKey]) continue;
+        if (article.publishedAt && new Date(article.publishedAt) < cutoff)
+          continue;
+        if (!article.content) continue;
+
+        results.push({
+          source: "blog",
+          name: blog.name,
+          title: article.title || "Untitled",
+          url: article.url || blog.rssUrl,
+          publishedAt: article.publishedAt || null,
+          author: article.author || "",
+          description: "",
+          content: article.content,
+        });
+        state.seenArticles[dedupKey] = Date.now();
+        added++;
+      }
+      console.error(`    ${blog.name}: ${added} new article(s)`);
+    } catch (err) {
+      errors.push(`Blog: Error processing ${blog.name}: ${err.message}`);
+    }
+  }
+
+  return results;
+}
+
 // -- Main --------------------------------------------------------------------
 
 async function main() {
@@ -1089,10 +1255,20 @@ async function main() {
     console.error(`  feed-podcasts.json: ${podcasts.length} episodes`);
   }
 
-  // Fetch blog posts
-  if (runBlogs && sources.blogs && sources.blogs.length > 0) {
+  // Fetch blog posts (HTML-scraped company blogs + generic RSS blogs)
+  const hasHtmlBlogs = sources.blogs && sources.blogs.length > 0;
+  const hasRssBlogs = sources.rss_blogs && sources.rss_blogs.length > 0;
+  if (runBlogs && (hasHtmlBlogs || hasRssBlogs)) {
     console.error("Fetching blog content...");
-    const blogContent = await fetchBlogContent(sources.blogs, state, errors);
+    const blogContent = [];
+    if (hasHtmlBlogs) {
+      blogContent.push(...(await fetchBlogContent(sources.blogs, state, errors)));
+    }
+    if (hasRssBlogs) {
+      blogContent.push(
+        ...(await fetchRssBlogContent(sources.rss_blogs, state, errors)),
+      );
+    }
     console.error(`  Found ${blogContent.length} new blog post(s)`);
 
     const blogFeed = {

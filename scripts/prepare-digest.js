@@ -26,11 +26,21 @@ import { homedir } from 'os';
 const USER_DIR = join(homedir(), '.follow-builders');
 const CONFIG_PATH = join(USER_DIR, 'config.json');
 
-const FEED_X_URL = 'https://raw.githubusercontent.com/zarazhangrui/follow-builders/main/feed-x.json';
-const FEED_PODCASTS_URL = 'https://raw.githubusercontent.com/zarazhangrui/follow-builders/main/feed-podcasts.json';
-const FEED_BLOGS_URL = 'https://raw.githubusercontent.com/zarazhangrui/follow-builders/main/feed-blogs.json';
+// Which GitHub repo to pull the feeds + prompts from. Self-hosters point this
+// at their own fork (so they get their own robotics/WeChat/RSS sources).
+// Resolution order: env var > config.feedRepo > the upstream default.
+const DEFAULT_FEED_REPO = 'zarazhangrui/follow-builders';
 
-const PROMPTS_BASE = 'https://raw.githubusercontent.com/zarazhangrui/follow-builders/main/prompts';
+function feedUrls(repo) {
+  const raw = `https://raw.githubusercontent.com/${repo}/main`;
+  return {
+    x: `${raw}/feed-x.json`,
+    podcasts: `${raw}/feed-podcasts.json`,
+    blogs: `${raw}/feed-blogs.json`,
+    promptsBase: `${raw}/prompts`
+  };
+}
+
 const PROMPT_FILES = [
   'summarize-podcast.md',
   'summarize-tweets.md',
@@ -72,11 +82,15 @@ async function main() {
     }
   }
 
-  // 2. Fetch all three feeds
+  // 2. Resolve which repo to pull from, then fetch all three feeds
+  const feedRepo =
+    process.env.FOLLOW_BUILDERS_FEED_REPO || config.feedRepo || DEFAULT_FEED_REPO;
+  const URLS = feedUrls(feedRepo);
+
   const [feedX, feedPodcasts, feedBlogs] = await Promise.all([
-    fetchJSON(FEED_X_URL),
-    fetchJSON(FEED_PODCASTS_URL),
-    fetchJSON(FEED_BLOGS_URL)
+    fetchJSON(URLS.x),
+    fetchJSON(URLS.podcasts),
+    fetchJSON(URLS.blogs)
   ]);
 
   if (!feedX) errors.push('Could not fetch tweet feed');
@@ -121,7 +135,7 @@ async function main() {
     }
 
     // Priority 2: latest from GitHub (central updates)
-    const remote = await fetchText(`${PROMPTS_BASE}/${filename}`);
+    const remote = await fetchText(`${URLS.promptsBase}/${filename}`);
     if (remote) {
       prompts[key] = remote;
       continue;

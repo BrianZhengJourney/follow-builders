@@ -47,7 +47,28 @@
       "fetchMethod": "http"
     }
   ],
+  "rss_blogs": [
+    {
+      "name": "IEEE Spectrum Robotics",
+      "rssUrl": "https://spectrum.ieee.org/feeds/topic/robotics.rss",
+      "lang": "en"
+    },
+    {
+      "name": "Import AI (Jack Clark)",
+      "rssUrl": "https://jack-clark.net/feed/",
+      "lang": "en"
+    }
+  ],
   "x_accounts": [
+    { "name": "Brett Adcock (Figure)", "handle": "adcock_brett" },
+    { "name": "Physical Intelligence", "handle": "physical_int" },
+    { "name": "Jim Fan (NVIDIA GEAR)", "handle": "DrJimFan" },
+    { "name": "Sergey Levine", "handle": "svlevine" },
+    { "name": "Chelsea Finn", "handle": "chelseabfinn" },
+    { "name": "Pieter Abbeel", "handle": "pabbeel" },
+    { "name": "Russ Tedrake", "handle": "RussTedrake" },
+    { "name": "Deepak Pathak", "handle": "pathak2206" },
+    { "name": "Unitree Robotics", "handle": "UnitreeRobotics" },
     { "name": "Andrej Karpathy", "handle": "karpathy" },
     { "name": "Swyx", "handle": "swyx" },
     { "name": "Josh Woodward", "handle": "joshwoodward" },
