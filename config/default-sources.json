@@ -97,6 +97,26 @@
       "name": "少数派 sspai",
       "rssUrl": "https://diygodrsshubchromium-bundled-production-23b7.up.railway.app/sspai/index",
       "lang": "zh"
+    },
+    {
+      "name": "Lilian Weng",
+      "rssUrl": "https://lilianweng.github.io/index.xml",
+      "lang": "en"
+    },
+    {
+      "name": "Simon Willison",
+      "rssUrl": "https://simonwillison.net/atom/everything/",
+      "lang": "en"
+    },
+    {
+      "name": "Sebastian Raschka (Ahead of AI)",
+      "rssUrl": "https://magazine.sebastianraschka.com/feed",
+      "lang": "en"
+    },
+    {
+      "name": "Chip Huyen",
+      "rssUrl": "https://huyenchip.com/feed.xml",
+      "lang": "en"
     }
   ],
   "x_accounts": [
