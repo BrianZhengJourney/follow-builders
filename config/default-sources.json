@@ -29,6 +29,16 @@
       "name": "AI & I by Every",
       "rssUrl": "https://anchor.fm/s/ed1f5584/podcast/rss",
       "url": "https://www.youtube.com/playlist?list=PLuMcoKK9mKgHtW_o9h5sGO2vXrffKHwJL"
+    },
+    {
+      "name": "The Robot Brains Podcast",
+      "rssUrl": "https://feeds.acast.com/public/shows/the-robot-brains",
+      "url": "https://www.therobotbrains.ai/"
+    },
+    {
+      "name": "TWIML AI Podcast",
+      "rssUrl": "https://feeds.megaphone.fm/MLN2155636147",
+      "url": "https://twimlai.com/podcast/twimlai/"
     }
   ],
   "blogs": [
@@ -127,6 +137,56 @@
       "name": "跟李沐学AI (bilibili)",
       "rssUrl": "https://diygodrsshubchromium-bundled-production-23b7.up.railway.app/bilibili/user/video/1567748478",
       "lang": "zh"
+    },
+    {
+      "name": "银河通用 Galbot (bilibili)",
+      "rssUrl": "https://diygodrsshubchromium-bundled-production-23b7.up.railway.app/bilibili/user/video/3546595559737798",
+      "lang": "zh"
+    },
+    {
+      "name": "逐际动力 LimX Dynamics (bilibili)",
+      "rssUrl": "https://diygodrsshubchromium-bundled-production-23b7.up.railway.app/bilibili/user/video/1172054289",
+      "lang": "zh"
+    },
+    {
+      "name": "傅利叶智能 Fourier Intelligence (bilibili)",
+      "rssUrl": "https://diygodrsshubchromium-bundled-production-23b7.up.railway.app/bilibili/user/video/519804427",
+      "lang": "zh"
+    },
+    {
+      "name": "优必选 UBTech (bilibili)",
+      "rssUrl": "https://diygodrsshubchromium-bundled-production-23b7.up.railway.app/bilibili/user/video/472153261",
+      "lang": "zh"
+    },
+    {
+      "name": "星海图 Galaxea AI (bilibili)",
+      "rssUrl": "https://diygodrsshubchromium-bundled-production-23b7.up.railway.app/bilibili/user/video/3546640453471155",
+      "lang": "zh"
+    },
+    {
+      "name": "自变量 X Square Robot (bilibili)",
+      "rssUrl": "https://diygodrsshubchromium-bundled-production-23b7.up.railway.app/bilibili/user/video/3546800709438203",
+      "lang": "zh"
+    },
+    {
+      "name": "arXiv cs.LG",
+      "rssUrl": "https://rss.arxiv.org/rss/cs.LG",
+      "lang": "en"
+    },
+    {
+      "name": "arXiv cs.CV",
+      "rssUrl": "https://rss.arxiv.org/rss/cs.CV",
+      "lang": "en"
+    },
+    {
+      "name": "Google DeepMind blog",
+      "rssUrl": "https://deepmind.google/blog/rss.xml",
+      "lang": "en"
+    },
+    {
+      "name": "NVIDIA Developer blog — Robotics",
+      "rssUrl": "https://developer.nvidia.com/blog/category/robotics/feed/",
+      "lang": "en"
     }
   ],
   "x_accounts": [
@@ -164,6 +224,34 @@
     { "name": "Dan Shipper", "handle": "danshipper" },
     { "name": "Aditya Agarwal", "handle": "adityaag" },
     { "name": "Sam Altman", "handle": "sama" },
-    { "name": "Claude", "handle": "claudeai" }
+    { "name": "Claude", "handle": "claudeai" },
+    { "name": "1X Technologies", "handle": "1x_tech" },
+    { "name": "Tesla Optimus", "handle": "Tesla_Optimus" },
+    { "name": "Boston Dynamics", "handle": "BostonDynamics" },
+    { "name": "Agility Robotics", "handle": "agilityrobotics" },
+    { "name": "Skild AI", "handle": "SkildAI" },
+    { "name": "Toyota Research Institute", "handle": "ToyotaResearch" },
+    { "name": "RAI Institute", "handle": "rai_inst" },
+    { "name": "Wayve", "handle": "wayve_ai" },
+    { "name": "Covariant", "handle": "CovariantAI" },
+    { "name": "Apptronik", "handle": "Apptronik" },
+    { "name": "Karol Hausman", "handle": "hausman_k" },
+    { "name": "Lerrel Pinto", "handle": "LerrelPinto" },
+    { "name": "Shuran Song", "handle": "SongShuran" },
+    { "name": "Ken Goldberg", "handle": "Ken_Goldberg" },
+    { "name": "Rémi Cadène", "handle": "RemiCadene" },
+    { "name": "Ted Xiao", "handle": "xiao_ted" },
+    { "name": "Danny Driess", "handle": "DannyDriess" },
+    { "name": "Chris Paxton", "handle": "chris_j_paxton" },
+    { "name": "NVIDIA Robotics", "handle": "NVIDIARobotics" },
+    { "name": "Google DeepMind", "handle": "GoogleDeepMind" },
+    { "name": "Hugging Face LeRobot", "handle": "LeRobotHF" },
+    { "name": "Stanford HAI", "handle": "StanfordHAI" },
+    { "name": "银河通用 Galbot", "handle": "GalbotRobotics" },
+    { "name": "逐际动力 LimX Dynamics", "handle": "LimX_Dynamics" },
+    { "name": "傅利叶智能 Fourier Intelligence", "handle": "FourierRobots" },
+    { "name": "优必选 UBTech", "handle": "UBTECHRobotics" },
+    { "name": "星海图 Galaxea AI", "handle": "GalaxeaDynamics" },
+    { "name": "自变量 X Square Robot", "handle": "XSquareRobot" }
   ]
 }
