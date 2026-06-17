@@ -72,6 +72,31 @@
       "name": "36氪 AI",
       "rssUrl": "https://diygodrsshubchromium-bundled-production-23b7.up.railway.app/36kr/motif/327686782977",
       "lang": "zh"
+    },
+    {
+      "name": "36氪 科技快讯",
+      "rssUrl": "https://diygodrsshubchromium-bundled-production-23b7.up.railway.app/36kr/information/web_news",
+      "lang": "zh"
+    },
+    {
+      "name": "HuggingFace Daily Papers",
+      "rssUrl": "https://diygodrsshubchromium-bundled-production-23b7.up.railway.app/huggingface/daily-papers",
+      "lang": "en"
+    },
+    {
+      "name": "arXiv 机器人 (cs.RO)",
+      "rssUrl": "https://rss.arxiv.org/rss/cs.RO",
+      "lang": "en"
+    },
+    {
+      "name": "arXiv AI (cs.AI)",
+      "rssUrl": "https://rss.arxiv.org/rss/cs.AI",
+      "lang": "en"
+    },
+    {
+      "name": "少数派 sspai",
+      "rssUrl": "https://diygodrsshubchromium-bundled-production-23b7.up.railway.app/sspai/index",
+      "lang": "zh"
     }
   ],
   "x_accounts": [
