@@ -1138,7 +1138,9 @@ async function fetchRssBlogContent(rssBlogs, state, errors) {
           Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
           "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
         },
-        signal: AbortSignal.timeout(30000),
+        // Generous timeout: some feeds (e.g. bilibili via a browserless bridge)
+        // are rendered by a headless browser and can take 30–90s.
+        signal: AbortSignal.timeout(120000),
       });
       if (!res.ok) {
         errors.push(
@@ -1158,7 +1160,11 @@ async function fetchRssBlogContent(rssBlogs, state, errors) {
         if (state.seenArticles[dedupKey]) continue;
         if (article.publishedAt && new Date(article.publishedAt) < cutoff)
           continue;
-        if (!article.content) continue;
+        // Media feeds (e.g. bilibili videos) often have only an embed in the
+        // body, so fall back to the title — which is itself informative — and
+        // only skip when there's truly nothing to show.
+        const body = article.content || article.title;
+        if (!body) continue;
 
         results.push({
           source: "blog",
@@ -1168,7 +1174,7 @@ async function fetchRssBlogContent(rssBlogs, state, errors) {
           publishedAt: article.publishedAt || null,
           author: article.author || "",
           description: "",
-          content: article.content,
+          content: body,
         });
         state.seenArticles[dedupKey] = Date.now();
         added++;
